@@ -16,19 +16,21 @@ def open_location_async(
     session: Session,
     location: Union[Location, LocationLink],
     side_by_side: bool,
-    force_group: bool
+    force_group: bool,
+    group: int = -1
 ) -> None:
     flags = sublime.ENCODED_POSITION
     if force_group:
         flags |= sublime.FORCE_GROUP
     if side_by_side:
         flags |= sublime.ADD_TO_SELECTION | sublime.SEMI_TRANSIENT
+        group = -1
 
     def check_success_async(view: Optional[sublime.View]) -> None:
         if not view:
             sublime.error_message("Unable to open URI")
 
-    session.open_location_async(location, flags).then(check_success_async)
+    session.open_location_async(location, flags, group).then(check_success_async)
 
 
 def open_basic_file(
@@ -59,7 +61,8 @@ class LocationPicker:
         view: sublime.View,
         session: Session,
         locations: Union[List[Location], List[LocationLink]],
-        side_by_side: bool
+        side_by_side: bool,
+        group: int = -1
     ) -> None:
         self._view = view
         self._view_states = ([r.to_tuple() for r in view.sel()], view.viewport_position())
@@ -69,6 +72,7 @@ class LocationPicker:
         self._window = window
         self._weaksession = weakref.ref(session)
         self._side_by_side = side_by_side
+        self._group = group
         self._items = locations
         self._highlighted_view = None  # type: Optional[sublime.View]
         manager = session.manager()
@@ -98,7 +102,7 @@ class LocationPicker:
             if uri.startswith(("file:", "res:")):
                 flags = sublime.ENCODED_POSITION
                 if not self._side_by_side:
-                    view = open_basic_file(session, uri, position, flags)
+                    view = open_basic_file(session, uri, position, flags, self._group)
                     if not view:
                         self._window.status_message("Unable to open {}".format(uri))
             else:

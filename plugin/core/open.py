@@ -31,7 +31,11 @@ def open_file(
         opens_in_desired_group = not bool(flags & sublime.FORCE_GROUP) or \
                                  window.get_view_index(view)[0] == window.active_group()
         opens_in_side_by_side = bool(flags & (sublime.ADD_TO_SELECTION | sublime.REPLACE_MRU))
-        return_existing_view = opens_in_desired_group and not opens_in_side_by_side
+
+        opens_in_selected_group = group > -1 and window.get_view_index(view)[0] == group
+
+        return_existing_view = opens_in_selected_group and opens_in_desired_group and not opens_in_side_by_side
+
         if return_existing_view:
             return Promise.resolve(view)
 
